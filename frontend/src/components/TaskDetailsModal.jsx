@@ -309,8 +309,9 @@ function TaskDetailsModal({ isOpen, onClose, taskId, onTaskUpdated, onTaskDelete
       await api.post(`/api/attachments/upload?taskId=${taskId}`, formData);
       fetchAttachments();
     } catch (err) {
-      console.error('Failed to upload file:', err);
-      setError('Failed to upload file.');
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to upload file.';
+      console.error('Failed to upload file:', err.response || err);
+      setError(`Upload failed: ${errorMessage}`);
     } finally {
       setUploading(false);
     }
