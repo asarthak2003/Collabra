@@ -306,11 +306,7 @@ function TaskDetailsModal({ isOpen, onClose, taskId, onTaskUpdated, onTaskDelete
 
     try {
       setUploading(true);
-      await api.post(`/api/attachments/upload?taskId=${taskId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await api.post(`/api/attachments/upload?taskId=${taskId}`, formData);
       fetchAttachments();
     } catch (err) {
       console.error('Failed to upload file:', err);
