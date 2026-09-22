@@ -32,8 +32,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Permit both the Auth endpoints and the WebSocket handshake endpoint
-                        .requestMatchers("/api/auth/**", "/ws-chat/**").permitAll()
+                        // Permit Auth, Health Check, and WebSocket handshake endpoints
+                        .requestMatchers("/api/auth/**", "/api/health/**", "/ws-chat/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
