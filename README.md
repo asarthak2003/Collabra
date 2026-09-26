@@ -5,6 +5,11 @@ Collabra is a modern, enterprise-grade, full-stack team collaboration platform m
 
 ![Collabra Dashboard](https://img.shields.io/badge/Status-Active-success) ![License](https://img.shields.io/badge/License-MIT-blue) ![React](https://img.shields.io/badge/React-19-61dafb) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-6db33f) ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
 
+> [!NOTE]
+> ### ⚡ Live Demo & Server Availability
+> * **Active Server Hours:** **9:30 AM – 9:30 PM IST** (The backend is kept actively warm with zero cold-start delay).
+> * **Off-Peak Hours:** To conserve free-tier hosting quotas, the backend container automatically spins down during off-peak hours. If testing outside active hours, please allow **~45–60 seconds** on the initial request for the instance to perform a cold start.
+
 ---
 
 ## ✨ What Makes Collabra Special?
