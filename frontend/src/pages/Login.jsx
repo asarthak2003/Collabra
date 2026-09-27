@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import { Layers, User, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
+import { Layers, User, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import ServerWarmupIndicator from "../components/ServerWarmupIndicator";
 
 function Login() {
     const [usernameOrEmail, setUsernameOrEmail] = useState('');
@@ -42,6 +43,9 @@ function Login() {
                         Access your team collaboration workspace
                     </p>
                 </div>
+                {/* Automatic Server Cold-Start Warmup Indicator */}
+                <ServerWarmupIndicator />
+
                 {/* Error Notification Alert */}
                 {error && (
                     <div className="flex items-center space-x-2 bg-rose-955/40 border border-rose-900/50 p-4 rounded-xl text-rose-400 text-sm mb-6 animate-shake">

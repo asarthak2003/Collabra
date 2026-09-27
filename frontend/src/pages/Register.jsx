@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Layers, User, Mail, Lock, Shield, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import ServerWarmupIndicator from '../components/ServerWarmupIndicator';
 
 function Register() {
   const [name, setName] = useState('');
@@ -60,6 +61,9 @@ function Register() {
             Get started with TeamCollab workspace
           </p>
         </div>
+
+        {/* Automatic Server Cold-Start Warmup Indicator */}
+        <ServerWarmupIndicator />
 
         {/* Error Alert Box */}
         {error && (

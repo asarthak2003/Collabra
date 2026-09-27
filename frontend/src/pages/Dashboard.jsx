@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { 
@@ -105,9 +106,9 @@ function Dashboard() {
                   Review, filter, and modify tasks assigned to you. Move task status indicators through columns on the Kanban board.
                 </p>
               </div>
-              <a href="/tasks" className="mt-6 text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition w-fit">
+              <Link to="/tasks" className="mt-6 text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition w-fit">
                 Go to Tasks Board &rarr;
-              </a>
+              </Link>
             </div>
 
             <div className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl flex flex-col justify-between hover:border-slate-850 transition">
@@ -118,9 +119,9 @@ function Dashboard() {
                   Check active projects workspace list, track audit activity logs, and chat live in project discussion rooms.
                 </p>
               </div>
-              <a href="/projects" className="mt-6 text-xs text-violet-400 hover:text-violet-300 font-semibold transition w-fit">
+              <Link to="/projects" className="mt-6 text-xs text-violet-400 hover:text-violet-300 font-semibold transition w-fit">
                 View Projects Directory &rarr;
-              </a>
+              </Link>
             </div>
           </div>
         </div>

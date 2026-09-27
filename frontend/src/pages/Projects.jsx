@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import CreateProjectModal from '../components/CreateProjectModal';
@@ -205,12 +206,12 @@ function Projects() {
 
               {/* Action Buttons Panel */}
               <div className="flex items-center justify-between border-t border-slate-900 pt-4">
-                <a 
-                  href={`/tasks?projectId=${project.id}`}
+                <Link 
+                  to={`/tasks?projectId=${project.id}`}
                   className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition"
                 >
                   View Tasks Board &rarr;
-                </a>
+                </Link>
                 
                 {isAdminOrPM && (
                   <div className="flex items-center space-x-1">
