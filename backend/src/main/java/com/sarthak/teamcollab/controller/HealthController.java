@@ -16,6 +16,8 @@ public class HealthController {
     public ResponseEntity<Map<String, Object>> checkHealth() {
         return ResponseEntity.ok(Map.of(
                 "status", "UP",
+                "service", "collabra-backend",
+                "version", "1.0.1",
                 "message", "TeamCollab Backend is active and running",
                 "timestamp", Instant.now().toString()
         ));
