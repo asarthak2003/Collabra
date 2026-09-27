@@ -1,145 +1,180 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../services/api';
-import { Server, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import axios from 'axios';
+import { Loader2, CheckCircle2, CloudLightning } from 'lucide-react';
 
-const ESTIMATED_BOOT_SECONDS = 60;
+const ESTIMATED_BOOT_SECONDS = 50;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 function ServerWarmupIndicator() {
-  const [status, setStatus] = useState('checking'); // 'checking' | 'waking' | 'ready' | 'hidden'
+  const [status, setStatus] = useState('hidden'); // 'hidden' | 'waking' | 'ready'
   const [elapsed, setElapsed] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(5);
+  
   const isMounted = useRef(true);
+  const stateRef = useRef('checking'); // 'checking' | 'waking' | 'ready' | 'hidden'
+  const initialDelayRef = useRef(null);
   const pingIntervalRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
   useEffect(() => {
     isMounted.current = true;
-    let startTime = Date.now();
+    stateRef.current = 'checking';
+    let startTime = null;
 
-    // Check health immediately
+    const clearAllTimers = () => {
+      clearTimeout(initialDelayRef.current);
+      clearInterval(pingIntervalRef.current);
+      clearInterval(timerIntervalRef.current);
+    };
+
+    const startWakingMode = () => {
+      // If already ready or already waking, do nothing
+      if (stateRef.current === 'ready' || stateRef.current === 'waking' || !isMounted.current) {
+        return;
+      }
+      
+      stateRef.current = 'waking';
+      setStatus('waking');
+      startTime = Date.now();
+
+      // Start elapsed timer & progress calculation
+      timerIntervalRef.current = setInterval(() => {
+        if (!isMounted.current || stateRef.current !== 'waking' || !startTime) return;
+        const currentElapsed = Math.floor((Date.now() - startTime) / 1000);
+        setElapsed(currentElapsed);
+
+        const calculatedProgress = Math.min(
+          95,
+          Math.max(5, Math.round((currentElapsed / ESTIMATED_BOOT_SECONDS) * 100))
+        );
+        setProgress(calculatedProgress);
+      }, 1000);
+    };
+
+    // Health check function
     const checkServer = async () => {
+      // If already marked ready, stop checking
+      if (stateRef.current === 'ready') return true;
+
       try {
-        const res = await api.get('/api/health', { timeout: 8000 });
+        const res = await axios.get(`${API_BASE_URL}/api/health`, { timeout: 4000 });
         if (res.data?.status === 'UP') {
-          if (!isMounted.current) return;
-          clearInterval(pingIntervalRef.current);
-          clearInterval(timerIntervalRef.current);
+          if (!isMounted.current || stateRef.current === 'ready') return true;
+
+          // Clear all pending timeouts and polling intervals
+          clearAllTimers();
+          stateRef.current = 'ready';
           setProgress(100);
           setStatus('ready');
-          
-          // Auto-hide after 3.5 seconds
+
+          // Auto-hide the green ready banner after 3 seconds
           setTimeout(() => {
             if (isMounted.current) {
+              stateRef.current = 'hidden';
               setStatus('hidden');
             }
-          }, 3500);
+          }, 3000);
           return true;
         }
       } catch (err) {
-        // Backend still asleep or booting up
-        if (isMounted.current && status === 'checking') {
-          setStatus('waking');
+        // Only trigger waking mode if we are not already ready
+        if (stateRef.current !== 'ready') {
+          startWakingMode();
         }
       }
       return false;
     };
 
-    // If still checking after 2.5s, trigger waking state
-    const slowCheckTimeout = setTimeout(() => {
-      if (isMounted.current && status === 'checking') {
-        setStatus('waking');
-      }
-    }, 2500);
-
-    // Initial check
+    // Immediate initial check
     checkServer();
 
-    // Periodic ping every 4.5 seconds
+    // If initial check doesn't succeed within 1.5 seconds, start waking countdown
+    initialDelayRef.current = setTimeout(() => {
+      if (stateRef.current === 'checking') {
+        startWakingMode();
+      }
+    }, 1500);
+
+    // Continue polling every 3 seconds
     pingIntervalRef.current = setInterval(() => {
       checkServer();
-    }, 4500);
-
-    // Dynamic timer & progress simulation
-    timerIntervalRef.current = setInterval(() => {
-      if (!isMounted.current) return;
-      const currentElapsed = Math.floor((Date.now() - startTime) / 1000);
-      setElapsed(currentElapsed);
-
-      // Smooth progress calculation (caps at 95% until real 200 response received)
-      const calculatedProgress = Math.min(
-        95,
-        Math.round((currentElapsed / ESTIMATED_BOOT_SECONDS) * 100)
-      );
-      setProgress(calculatedProgress);
-    }, 1000);
+    }, 3000);
 
     return () => {
       isMounted.current = false;
-      clearTimeout(slowCheckTimeout);
-      clearInterval(pingIntervalRef.current);
-      clearInterval(timerIntervalRef.current);
+      clearAllTimers();
     };
   }, []);
 
-  if (status === 'hidden' || status === 'checking') {
+  if (status === 'hidden') {
     return null;
   }
 
   const remainingSeconds = Math.max(0, ESTIMATED_BOOT_SECONDS - elapsed);
 
   return (
-    <div className="mb-6 overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-900/80 p-4 shadow-xl backdrop-blur-md transition-all animate-in fade-in slide-in-from-top-3 duration-300">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center space-x-3">
-          <div className={`p-2 rounded-xl text-white ${
-            status === 'ready' 
-              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-              : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 animate-pulse'
-          }`}>
-            {status === 'ready' ? (
-              <CheckCircle2 size={18} />
-            ) : (
-              <Server size={18} />
-            )}
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-slate-100 flex items-center space-x-1.5">
-              <span>{status === 'ready' ? 'Cloud Server Ready' : 'Waking Up Cloud Backend'}</span>
-              {status === 'ready' && <Sparkles size={12} className="text-amber-400" />}
-            </h4>
-            <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-              {status === 'ready' 
-                ? 'Backend connected. You can now sign in instantly!' 
-                : 'Free-tier instance is cold-starting. Ping sent to Render...'}
-            </p>
+    <div
+      style={{
+        backgroundColor: status === 'ready' ? '#ecfdf5' : '#eef2ff',
+        borderColor: status === 'ready' ? '#a7f3d0' : '#c7d2fe',
+      }}
+      className="mb-5 rounded-xl border p-3.5 shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-top-2"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2.5">
+          {status === 'ready' ? (
+            <CheckCircle2 size={20} className="text-emerald-600 shrink-0" />
+          ) : (
+            <CloudLightning size={20} className="text-indigo-600 shrink-0 animate-pulse" />
+          )}
+
+          <div className="flex flex-col">
+            <span
+              style={{ color: status === 'ready' ? '#065f46' : '#1e1b4b' }}
+              className="text-xs font-bold leading-tight"
+            >
+              {status === 'ready'
+                ? 'Server is online & ready!'
+                : 'Waking up cloud server...'}
+            </span>
+            <span
+              style={{ color: status === 'ready' ? '#047857' : '#4338ca' }}
+              className="text-[11px] font-semibold mt-0.5"
+            >
+              {status === 'ready'
+                ? 'Ready to sign in immediately'
+                : 'Free-tier cold start in progress'}
+            </span>
           </div>
         </div>
 
         {status === 'waking' && (
-          <div className="flex items-center space-x-1 text-[11px] font-mono text-indigo-400 font-semibold shrink-0 bg-indigo-950/60 border border-indigo-800/40 px-2 py-0.5 rounded-lg">
-            <Loader2 size={11} className="animate-spin text-indigo-400" />
-            <span>~{remainingSeconds > 0 ? `${remainingSeconds}s` : 'a few sec'}</span>
+          <div
+            style={{
+              color: '#312e81',
+              backgroundColor: '#e0e7ff',
+              borderColor: '#a5b4fc',
+            }}
+            className="flex items-center space-x-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg border shadow-xs"
+          >
+            <Loader2 size={12} className="animate-spin text-indigo-600" />
+            <span>~{remainingSeconds > 0 ? `${remainingSeconds}s` : 'soon'}</span>
           </div>
         )}
       </div>
 
-      {/* Dynamic Animated Progress Bar */}
-      <div className="mt-3 space-y-1">
-        <div className="flex justify-between text-[10px] text-slate-500 font-medium">
-          <span>{status === 'ready' ? '100% Ready' : `Spinning up container: ${progress}%`}</span>
-          <span>{status === 'ready' ? 'Online' : `${elapsed}s elapsed`}</span>
-        </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-950">
-          <div 
-            className={`h-full transition-all duration-700 rounded-full ${
-              status === 'ready' 
-                ? 'bg-emerald-500 shadow-md shadow-emerald-500/50' 
-                : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-400 shadow-md shadow-indigo-500/30'
-            }`}
-            style={{ width: `${progress}%` }}
+      {/* Progress Bar */}
+      {status === 'waking' && (
+        <div
+          style={{ backgroundColor: '#c7d2fe' }}
+          className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full"
+        >
+          <div
+            style={{ width: `${progress}%`, backgroundColor: '#4f46e5' }}
+            className="h-full rounded-full transition-all duration-1000 ease-out"
           ></div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

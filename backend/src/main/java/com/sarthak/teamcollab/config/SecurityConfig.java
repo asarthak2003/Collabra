@@ -32,8 +32,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         // Permit Auth, Health Check, and WebSocket handshake endpoints
-                        .requestMatchers("/api/auth/**", "/api/health/**", "/ws-chat/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/health", "/api/health/**", "/ws-chat/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
